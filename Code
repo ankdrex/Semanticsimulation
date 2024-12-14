@@ -1,0 +1,98 @@
+import random
+
+# Grid dimensions
+GRID_WIDTH = 3
+GRID_HEIGHT = 3
+
+# Starting and goal positions
+START_POSITION = (1, 2)  # x=1, y=2
+GOAL_POSITION = (3, 1)   # x=3, y=1
+
+# Simulation parameters
+BUDGET = 80        # Energy budget at the starting location
+MOVE_COST = 10     # Energy cost per move
+TOTAL_SIMULATIONS = 1000  # Number of simulations
+
+# Special predator trap position that depletes the budget
+BUDGET_TRAP_POSITION = (2, 1)
+
+# Possible moves of organism (dx, dy)
+MOVES = [
+    (1, 0),  # Move forward (right)
+    (0, 1),  # Move up
+    (0, -1)  # Move down
+]
+
+# Avoidance probability for the trap
+trap_avoidance_probability = 0.5  # 50% chance to recognize trap
+
+
+# Function to check if a position is within the grid boundaries
+def is_within_grid(x, y):
+    return 1 <= x <= GRID_WIDTH and 1 <= y <= GRID_HEIGHT
+
+
+# Run simulations
+def run_simulations():
+    global trap_avoidance_probability
+    successes = 0
+    failures = 0
+    total_steps = 0
+
+    for simulation in range(TOTAL_SIMULATIONS):
+        position = START_POSITION
+        budget = BUDGET
+        steps = 0
+        print(f"Simulation {simulation + 1}")
+        while budget > 0:
+            # Check if agent reached the goal
+            if position == GOAL_POSITION:
+                successes += 1
+                break
+
+            # Choose a random move
+            move = random.choice(MOVES)
+            new_x = position[0] + move[0]
+            new_y = position[1] + move[1]
+
+
+            # Only move if the new position is within the grid
+            if is_within_grid(new_x, new_y):
+                position = (new_x, new_y)
+                steps += 1
+
+                # Check if the position is the trap position
+                if position == BUDGET_TRAP_POSITION:
+                    if random.random() < trap_avoidance_probability:  # chance to escape
+                        print(f"Recognized trap")
+                    else:
+                        budget = 0  # Deplete budget completely
+                        print(f"Trapped, budget depleted.")
+                else:
+                    budget -= MOVE_COST  # Regular move cost
+
+        # If budget <= 0 and goal not reached, count as failure
+        if budget <= 0 and position != GOAL_POSITION:
+            failures += 1
+
+        total_steps += steps
+
+    # Calculate percentages
+    success_percentage = (successes / TOTAL_SIMULATIONS) * 100
+    failure_percentage = (failures / TOTAL_SIMULATIONS) * 100
+    avg_steps_per_simulation = total_steps / TOTAL_SIMULATIONS
+
+    # Print results
+    print("Results after", TOTAL_SIMULATIONS, "simulations:")
+    print("Total Successes:", successes)
+    print("Total Failures:", failures)
+    print("Total Steps Taken:", total_steps)
+    print("Success Percentage: {:.2f}%".format(success_percentage))
+    print("Failure Percentage: {:.2f}%".format(failure_percentage))
+    print("Average Steps per Simulation: {:.2f}".format(avg_steps_per_simulation))
+    print("Final Trap Avoidance Probability: {:.2f}".format(trap_avoidance_probability))
+
+
+# Run the simulation
+if __name__ == "__main__":
+    run_simulations()
