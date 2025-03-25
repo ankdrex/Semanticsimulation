@@ -1,25 +1,22 @@
 import random
-
-class MDPOrganism:
+# Example code for MDP with 4 resources
+class MDPAgent:
     def __init__(self):
         self.grid_size = (5, 5)
         self.start_pos = (1, 3)
         self.goal_pos = (5, 1)
-        self.trap_pos = (3, 1)  # Trap position
+        self.trap_pos = (3, 1)  # Added trap position
         self.resource_areas = {(2, 2): 60, (2, 4): 60, (4, 2): 60, (4, 4): 60}
-        self.energy_budget = 100 # Initial energy budget
+        self.energy_budget = 100
         self.max_energy = 100
-        self.energy_cost = 10 # Energy costs for movement
-        self.reserve_energy = 0
+        self.energy_cost = 10
         self.successes = 0
         self.failures = 0
         self.steps = 0
-        self.memory = set()  # Stores discovered resource locations 
 
     def reset(self):
         self.position = self.start_pos
         self.energy_budget = self.max_energy
-        self.reserve_energy = 0
         self.resource_areas = {(2, 2): 60, (2, 4): 60, (4, 2): 60, (4, 4): 60}
 
     def get_valid_moves(self):
@@ -29,40 +26,24 @@ class MDPOrganism:
         if y > 1: moves.append((x, y - 1))  # Down
         if y < self.grid_size[1]: moves.append((x, y + 1))  # Up
         self.steps += 1
-        # Increase likelihood of moving towards a known energy resource
-        if any(move in self.memory for move in moves):
-            weighted_moves = moves + [move for move in moves if move in self.memory] * 5
-            return random.choices(weighted_moves, k=1)[0], moves
-        
-        return random.choice(moves), moves
+        return moves
 
     def move(self):
         if self.energy_budget <= 0:
             return False
         
-        self.position, moves = self.get_valid_moves()
+        moves = self.get_valid_moves()
+        self.position = random.choice(moves)
         self.energy_budget -= self.energy_cost
 
-        if self.position == self.trap_pos:  # Check if organism moved into the trap
-            if random.random() < 0.5:  # 50% chance to escape
-                return True  # Continue simulation
-            else:
-                self.failures += 1
-                return False
+        if self.position == self.trap_pos:  # Check if agent moved into the trap
+            self.failures += 1
+            return False
 
         if self.position in self.resource_areas and self.resource_areas[self.position] > 0:
-            if self.energy_budget > 40:   # Threshold for energy recharge
-                self.reserve_energy += self.resource_areas[self.position]
-            else:
-                self.energy_budget = self.max_energy
+            self.energy_budget += self.resource_areas[self.position]
+            self.energy_budget = min(self.energy_budget, self.max_energy)
             self.resource_areas[self.position] = 0
-            self.memory.add(self.position)  # Store discovered resource
-
-        if self.energy_budget < 40 and self.reserve_energy > 0:
-            needed = self.max_energy - self.energy_budget
-            used = min(needed, self.reserve_energy)
-            self.energy_budget += used
-            self.reserve_energy -= used
 
         if self.energy_budget <= 0:
             self.failures += 1
@@ -74,13 +55,13 @@ class MDPOrganism:
 
         return True
 
-    def run_simulation(self, runs=1000):
+    def run_simulation(self, runs=100):
         for _ in range(runs):
             self.reset()
             while self.move():
                 pass
-        print(f"Successes: {self.successes}, Failures: {self.failures}, Steps:{self.steps} ")
+        print(f"Successes: {self.successes}, Failures: {self.failures}, Steps: {self.steps}")
 
 if __name__ == "__main__":
-    agent = MDPOrganism()
+    agent = MDPAgent()
     agent.run_simulation(1000)
