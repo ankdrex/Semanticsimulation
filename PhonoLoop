@@ -1,0 +1,64 @@
+import random
+import string
+from collections import deque
+
+# Simulation of Phonological Loop 
+#
+# Simulation of letter/word generation by cortex
+def letter_generator():
+    """Generator for letters from A to J, sequentially cycling."""
+    letters = list(string.ascii_uppercase[:10])  # "A" to "J"
+    index = 0
+    while True:
+        yield letters[index]
+        index = (index + 1) % len(letters)
+# Number of runs
+def simulate_letter_processing(runs=25):
+	# size definition for short term working memory STM
+    stm = deque(maxlen=5)  # Working memory with max capacity of 5
+    # size definition for outgoing articulatory cortex
+    am = deque(maxlen=5)   # Articulation Buffer with max capacity of 5
+    generator = letter_generator()
+    
+    # Initialize STM with first 3 letters
+    for _ in range(3):
+        stm.appendleft(next(generator))
+    
+    print("Initial WM:", list(stm))
+    
+    for step in range(1, runs + 1):
+        #print(f"\nStep {step}:")
+        
+        # Generate letters (randomly 0, 1, or 2 per delta t)
+        num_letters = random.choice([0, 1, 2])
+        print(f"Letters generated: {num_letters}")
+        
+        for _ in range(num_letters):
+            stm.appendleft(next(generator))
+        
+        #print("WM content after generation:", list(stm))
+        
+        # Copy entire WM to AB 
+        am = deque(stm, maxlen=5)
+        # print("AB after copying entire WM:", list(am))
+        
+        # Print and remove first letter from AM
+        if am:
+            removed = am.pop()
+            print(f"Articulated: {removed}")
+        
+        # Remove all or a portion of positions from STM, fleeting memory
+        stm.clear()
+        # print("WM after deletion:", list(stm))
+        
+        # Simulate phonological loop 
+        # Update WM with remaining AM letters, default=4 
+        # or less if only a portion flows back
+        stm.extendleft(reversed(list(am)[:4]))
+        print("WM after loop update:", list(stm))
+    
+    print("\nFinal WM:", list(stm))
+    print("Final AB", list(am))
+
+# Run the simulation
+simulate_letter_processing()
